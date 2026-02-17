@@ -177,6 +177,7 @@ export class Scene<TActivationData = unknown> implements CanInitialize, CanActiv
     return this._timers;
   }
   private _cancelQueue: Timer[] = [];
+  private _pausedEntities = new Set<Entity>();
 
   constructor() {
     // Initialize systems
@@ -636,6 +637,65 @@ export class Scene<TActivationData = unknown> implements CanInitialize, CanActiv
     }
 
     scene?.emit('entityremoved', { target: entity } as any);
+    this.add(entity);
+  }
+
+  /**
+   * Pauses an actor in the current scene, removing it from updates and draws without calling kill.
+   * @param actor The actor to pause in the current scene
+   */
+  public pause(actor: Actor): void;
+
+  /**
+   * Pauses an entity in the current scene, removing it from updates and draws without calling kill.
+   * @param entity The entity to pause in the current scene
+   */
+  public pause(entity: Entity): void;
+
+  /**
+   * Pauses a {@apilink ScreenElement} in the current scene, removing it from updates and draws without calling kill.
+   * @param screenElement The screen element to pause in the current scene
+   */
+  public pause(screenElement: ScreenElement): void;
+  public pause(entity: any): void {
+    if (!(entity instanceof Entity)) {
+      return;
+    }
+    if (entity.scene !== this || this._pausedEntities.has(entity)) {
+      return;
+    }
+
+    this.emit('entityremoved', { target: entity } as any);
+    this._pausedEntities.add(entity);
+    this.world.remove(entity, false);
+  }
+
+  /**
+   * Unpauses an actor previously paused in this scene.
+   * @param actor The actor to unpause
+   */
+  public unpause(actor: Actor): void;
+
+  /**
+   * Unpauses an entity previously paused in this scene.
+   * @param entity The entity to unpause
+   */
+  public unpause(entity: Entity): void;
+
+  /**
+   * Unpauses a {@apilink ScreenElement} previously paused in this scene.
+   * @param screenElement The screen element to unpause
+   */
+  public unpause(screenElement: ScreenElement): void;
+  public unpause(entity: any): void {
+    if (!(entity instanceof Entity)) {
+      return;
+    }
+    if (!this._pausedEntities.has(entity)) {
+      return;
+    }
+
+    this._pausedEntities.delete(entity);
     this.add(entity);
   }
 

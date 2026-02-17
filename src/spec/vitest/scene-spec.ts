@@ -744,6 +744,39 @@ describe('A scene', () => {
     expect(updated, 'ScreenElement was not updated after timer callback').toBe(true);
   });
 
+  it('can pause and unpause an actor in a scene', () => {
+    const updateSpy = vi.fn();
+    const drawSpy = vi.fn();
+    actor.on('postupdate', updateSpy);
+    actor.on('postdraw', drawSpy);
+
+    scene.add(actor);
+    scene.update(engine, 10);
+    scene.draw(engine.graphicsContext, 10);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(drawSpy).toHaveBeenCalledTimes(1);
+
+    vi.spyOn(actor, 'kill');
+    scene.pause(actor);
+    scene.update(engine, 10);
+    scene.draw(engine.graphicsContext, 10);
+
+    expect(scene.contains(actor)).toBe(false);
+    expect(actor.scene).toBe(null);
+    expect(actor.kill).not.toHaveBeenCalled();
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(drawSpy).toHaveBeenCalledTimes(1);
+
+    scene.unpause(actor);
+    scene.update(engine, 10);
+    scene.draw(engine.graphicsContext, 10);
+
+    expect(scene.contains(actor)).toBe(true);
+    expect(actor.scene).toBe(scene);
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+    expect(drawSpy).toHaveBeenCalledTimes(2);
+  });
+
   it('will kill the actor if the actor is removed from the scene', () => {
     scene.add(actor);
 
